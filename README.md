@@ -1,92 +1,181 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+![GHBanner](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
 
-# Run and deploy your AI Studio app
+# Gestion d'Absences des Employés
 
-This contains everything you need to run your app locally.
+Application web pour enregistrer les absences quotidiennes des employés, visualiser des statistiques, exporter en CSV et gérer le référentiel des employés. Interface moderne, responsive, thème clair/sombre, et persistance locale côté navigateur par défaut. Une API Node/Express + SQLite est fournie en option pour une persistance serveur locale.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1HZG3oFEOVYi2w8vkVxLASrdVCpfo_LTB
-
-## Run Locally
-
-**Prerequisites:**  Node.js
-
-
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Créée par [Joel Gaetan HASSAM OBAH](https://joelhassam.com/).
 
 ---
 
-## Base de données locale (SQLite)
+## Sommaire
+- Aperçu du projet
+- Fonctionnalités
+- Stack technique
+- Prérequis
+- Installation
+- Démarrage rapide
+- Scripts NPM
+- API locale (optionnelle)
+- Modèle de données
+- Déploiement (Netlify)
+- Dépannage (FAQ)
+- Roadmap
+- Licence & Crédits
 
-Une API Node/Express avec SQLite est incluse pour persister localement les employés et les absences.
+---
 
-- Fichier de base de données: `data/app.db`
-- Démarrage API: `npm run server` (http://localhost:3001)
-- Initialisation/seed de la base: `npm run setup:db`
-- Réinitialisation totale: `npm run db:reset`
-- Lancer front + API ensemble: `npm run dev:all`
+## Aperçu du projet
+- SPA React + Vite avec TypeScript
+- UI Tailwind CSS (chargé via CDN) et Chart.js (via CDN) pour les graphiques
+- Données persistées en `localStorage` par défaut, sans backend requis pour la version déployable
+- API locale optionnelle (Express + SQLite) incluse pour une future persistance serveur
 
-Endpoints principaux:
-- `GET    /api/health` → état du serveur
-- `GET    /api/employees` → liste des employés
-- `POST   /api/employees` → { name, role }
-- `PUT    /api/employees/:id` → { name, role }
-- `DELETE /api/employees/:id`
-- `GET    /api/absences?employeeId=...` → liste des absences
-- `POST   /api/absences` → { employeeId, date (YYYY-MM-DD), type, startTime (HH:MM), endTime (HH:MM), notes? }
-- `DELETE /api/absences/:id`
+## Fonctionnalités
+- Pointage journalier des absences
+  - Sélection d'un employé, type d'absence, heures de début/fin, notes
+  - Validation (ex: heure de début < heure de fin)
+  - Liste du jour pour l'employé sélectionné avec calcul automatique de durée
+- Dashboard et filtres
+  - Filtres par employé, type, période (sélecteurs de dates + presets 7 jours, ce mois, mois dernier)
+  - Graphiques: absences par type (camembert), absences par employé (barres horizontales)
+  - Historique des absences trié par date
+- Gestion des employés
+  - Création, édition, suppression
+  - Suppression cascade des absences d’un employé si backend utilisé
+- Export CSV
+  - Export des absences filtrées vers Excel/Sheets (CSV UTF-8 avec BOM)
+- Thème clair/sombre
+  - Détection automatique (prefers-color-scheme) + bascule manuelle
+- Responsive et accessible
 
-Exemples (macOS/zsh):
+## Stack technique
+- Frontend: React 19, Vite 6, TypeScript
+- UI: Tailwind CSS (CDN), composants utilitaires, icônes personnalisées
+- Graphiques: Chart.js (CDN)
+- Persistance côté client: `localStorage` (voir `services/absenceService.ts`)
+- Backend optionnel: Node.js + Express 4 + SQLite3 (voir `server/index.js`)
+- Déploiement: Netlify (SPA) avec `netlify.toml`
 
+## Prérequis
+- Node.js (LTS recommandé)
+- npm
+
+## Installation
 ```bash
-# Initialiser la base (crée data/app.db et seed les employés)
+npm install
+```
+
+## Démarrage rapide
+Vous avez deux options:
+
+1) 100% Frontend (recommandé, données en localStorage)
+```bash
+npm run dev
+```
+Ouvrez l’URL indiquée par Vite (ex: http://localhost:5173).
+
+2) Avec API locale (SQLite) — optionnel
+- Initialise la base et démarre l’API sur http://localhost:3001
+```bash
+npm run setup:db   # crée/seed data/app.db
+npm run server     # lance l’API Express
+```
+Remarque importante: l’UI actuelle persiste via localStorage. L’API fournie sert d’exemple/extension pour une persistance serveur ; elle n’est pas encore câblée au frontend par défaut.
+
+## Scripts NPM
+- `dev`: démarre Vite en mode développement
+- `build`: build de production Vite
+- `preview`: prévisualisation locale du build
+- `server`: démarre l’API Express (http://localhost:3001)
+- `setup:db`: initialise la base SQLite (création tables + seed employés)
+- `db:reset`: réinitialise la base (supprime puis `setup:db`)
+- `dev:all`: lance serveur API + web (en parallèle)
+- `deploy:netlify`: build puis déploiement Netlify (prod) vers `dist`
+
+## API locale (optionnelle)
+Base: `http://localhost:3001/api`
+
+Endpoints:
+- `GET /health` → état du serveur
+
+Employés
+- `GET    /employees` → liste des employés
+- `POST   /employees` → body: `{ name, role }`
+- `PUT    /employees/:id` → body: `{ name, role }`
+- `DELETE /employees/:id`
+
+Absences
+- `GET    /absences?employeeId=...` → liste des absences (filtrable par employé)
+- `POST   /absences` → body: `{ employeeId, date (YYYY-MM-DD), type, startTime (HH:MM), endTime (HH:MM), notes? }`
+- `DELETE /absences/:id`
+
+Exemples (zsh):
+```bash
+# Initialiser la base
 npm run setup:db
 
-# Démarrer l'API en local
-npm run server
-
-# Vérifier la santé
-echo; curl -sS http://localhost:3001/api/health | jq .
+# Vérifier l’API
+npm run server &
+curl -sS http://localhost:3001/api/health | cat
 
 # Lister les employés
-curl -sS http://localhost:3001/api/employees | jq .
+curl -sS http://localhost:3001/api/employees | cat
 ```
 
-Note: Le dossier `data/` et les fichiers `*.db` sont ignorés par git.
+## Modèle de données
+TypeScript (extraits de `types.ts`):
+```ts
+export interface Employee {
+  id: string;
+  name: string;
+  role: string;
+}
 
----
+export const ABSENCE_TYPES = ['Maladie', 'Congés Payés', 'Personnel', 'Non Justifiée', 'Retard'] as const;
+export type AbsenceType = typeof ABSENCE_TYPES[number];
 
-## Déployer sur Netlify
+export interface AbsenceRecord {
+  id: string;
+  employeeId: string;
+  date: string;     // YYYY-MM-DD
+  type: AbsenceType;
+  startTime: string; // HH:MM
+  endTime: string;   // HH:MM
+  notes?: string;
+}
+```
 
-Ce projet est une application Vite + React (SPA) qui peut être déployée telle quelle sur Netlify.
-
-- Fichier de config: `netlify.toml`
+## Déploiement (Netlify)
+- Config: `netlify.toml`
 - Dossier de publication: `dist`
 - Commande de build: `npm run build`
-- Redirection SPA: `/*` → `/index.html` (status 200)
+- Redirection SPA configurée
 
 Étapes rapides:
-
-1. Pousser votre code sur GitHub/GitLab/Bitbucket.
-2. Sur Netlify, créer un nouveau site depuis le dépôt.
-3. Paramètres de build:
-   - Build command: `npm run build`
-   - Publish directory: `dist`
+1. Pousser le code sur un dépôt Git.
+2. Créer un site sur Netlify depuis le dépôt.
+3. Build command: `npm run build`, Publish directory: `dist`.
 4. Déployer.
 
-Localmente, vous pouvez tester le build:
+Note: la version Netlify utilise `localStorage` et ne nécessite pas l’API.
 
-```bash
-npm ci
-npm run build
-npx serve dist
-```
+## Dépannage (FAQ)
+- Les graphiques ne s’affichent pas
+  - Vérifiez que Chart.js est chargé (via CDN dans `index.html`). Certains bloqueurs peuvent interférer.
+- Données incohérentes / besoin de repartir de zéro
+  - Vider le localStorage du navigateur ou supprimer `data/app.db` et relancer `npm run setup:db` (si vous utilisez l’API).
+- Conflit de ports
+  - Vite par défaut: 5173, API: 3001. Arrêter les services en conflit ou changer de port.
+- Build échoue
+  - Supprimer `node_modules` et réinstaller: `rm -rf node_modules && npm install`.
 
-Notes:
-- Les données sont stockées dans `localStorage` (voir `services/absenceService.ts`). Aucune API distante n’est requise pour la version Netlify actuelle.
-- Si vous souhaitez persister côté serveur, vous pouvez migrer l’API Express vers des Functions Netlify (`netlify/functions`) ou un backend externe.
+## Roadmap
+- Câbler l’UI au backend Express (remplacer `localStorage` par API)
+- Rapports & statistiques avancés (exports PDF, agrégations)
+- Authentification et rôles
+- Import CSV/Excel
+
+## Licence & Crédits
+- Licence: non spécifiée
+- Auteur: [Joel Gaetan HASSAM OBAH](https://joelhassam.com/)
