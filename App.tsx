@@ -8,6 +8,8 @@ type Page = 'clocking' | 'dashboard';
 const App: React.FC = () => {
   const [page, setPage] = useState<Page>('clocking');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  // Version exposée via Vite
+  const appVersion = (process.env.APP_VERSION as string) || '0.0.0';
 
   useEffect(() => {
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -78,6 +80,7 @@ const App: React.FC = () => {
             Joel Gaetan HASSAM OBAH
           </a>
         </p>
+        <p className="mt-1">Version {appVersion}</p>
       </footer>
     </div>
   );
