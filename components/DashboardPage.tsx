@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Employee, AbsenceRecord, ABSENCE_TYPES, AbsenceType } from '../types';
 import { getEmployees, getAbsences, addEmployee, NewEmployeeData, updateEmployee, deleteEmployee } from '../services/absenceService';
 import { UsersIcon, BarChartIcon, AlertTriangleIcon, UserPlusIcon, DownloadIcon, PencilIcon, TrashIcon, XMarkIcon, CheckCircleIcon } from './icons';
+import { durationMinutes, formatMinutes } from '../services/timeUtils';
 
 // Tell TypeScript that Chart is globally available from the CDN
 declare const Chart: any;
@@ -167,6 +168,40 @@ const DashboardPage: React.FC = () => {
     const sortedByEmployee = Object.entries(byEmployee).sort(([, a], [, b]) => b - a);
 
     return { byType, byEmployee: sortedByEmployee };
+  }, [absences, employees, startDate, endDate]);
+
+  // Statistiques avancées (durée totale, moyennes, tops)
+  const advancedStats = useMemo(() => {
+    const dateFiltered = absences.filter(a => (!startDate || a.date >= startDate) && (!endDate || a.date <= endDate));
+    let totalMinutes = 0;
+    const minutesByEmployee = new Map<string, number>();
+    const countsByType = new Map<AbsenceType, number>();
+
+    for (const a of dateFiltered) {
+      const mins = durationMinutes(a.startTime, a.endTime, { allowOverMidnight: false });
+      totalMinutes += mins;
+      const empName = employees.find(e => e.id === a.employeeId)?.name || 'Inconnu';
+      minutesByEmployee.set(empName, (minutesByEmployee.get(empName) || 0) + mins);
+      countsByType.set(a.type, (countsByType.get(a.type) || 0) + 1);
+    }
+
+    const topEmployeesByDuration = Array.from(minutesByEmployee.entries()).sort((a,b) => b[1]-a[1]).slice(0, 5);
+    const topTypes = Array.from(countsByType.entries()).sort((a,b) => b[1]-a[1]).slice(0, 3);
+
+    const avgPerDay = (() => {
+      const days = new Set(dateFiltered.map(a => a.date)).size || 1;
+      return Math.round(totalMinutes / days);
+    })();
+
+    return {
+      totalMinutes,
+      totalFormatted: formatMinutes(totalMinutes),
+      topEmployeesByDuration,
+      topTypes,
+      avgPerDayMinutes: avgPerDay,
+      avgPerDayFormatted: formatMinutes(avgPerDay),
+      count: dateFiltered.length,
+    };
   }, [absences, employees, startDate, endDate]);
 
   useEffect(() => {
@@ -545,9 +580,51 @@ const DashboardPage: React.FC = () => {
                 </button>
             </form>
          </div>
-         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg opacity-50">
+         <div className="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-lg">
             <h3 className="text-xl font-bold mb-2">Rapports & Statistiques</h3>
-            <p className="text-slate-500 dark:text-slate-400">Fonctionnalité à venir pour générer des rapports d'absence détaillés.</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/40">
+                <p className="text-sm text-slate-500">Durée totale (période)</p>
+                <p className="text-2xl font-bold">{advancedStats.totalFormatted}</p>
+                <p className="text-xs text-slate-500">{advancedStats.count} événements</p>
+              </div>
+              <div className="p-4 rounded-lg bg-slate-50 dark:bg-slate-700/40">
+                <p className="text-sm text-slate-500">Moyenne par jour</p>
+                <p className="text-2xl font-bold">{advancedStats.avgPerDayFormatted}</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <h4 className="font-semibold mb-2">Top employés (durée)</h4>
+                {advancedStats.topEmployeesByDuration.length > 0 ? (
+                  <ul className="space-y-1">
+                    {advancedStats.topEmployeesByDuration.map(([name, mins]) => (
+                      <li key={name} className="flex justify-between text-sm">
+                        <span>{name}</span>
+                        <span className="font-medium">{formatMinutes(mins)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-slate-500 text-sm">Aucune donnée</p>
+                )}
+              </div>
+              <div>
+                <h4 className="font-semibold mb-2">Types les plus fréquents</h4>
+                {advancedStats.topTypes.length > 0 ? (
+                  <ul className="space-y-1">
+                    {advancedStats.topTypes.map(([type, count]) => (
+                      <li key={type} className="flex justify-between text-sm">
+                        <span>{type}</span>
+                        <span className="font-medium">{count}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-slate-500 text-sm">Aucune donnée</p>
+                )}
+              </div>
+            </div>
          </div>
        </div>
 

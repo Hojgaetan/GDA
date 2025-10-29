@@ -1,5 +1,19 @@
 import { Employee, AbsenceRecord } from '../types';
 
+// Fallback localStorage pour environnements sans DOM (tests/SSR)
+const hasLocalStorage = typeof globalThis !== 'undefined' && typeof (globalThis as any).localStorage !== 'undefined';
+if (!hasLocalStorage) {
+  const mem: Record<string, string> = {};
+  (globalThis as any).localStorage = {
+    getItem(key: string) { return Object.prototype.hasOwnProperty.call(mem, key) ? mem[key] : null; },
+    setItem(key: string, value: string) { mem[key] = String(value); },
+    removeItem(key: string) { delete mem[key]; },
+    clear() { for (const k of Object.keys(mem)) delete mem[k]; },
+    key(i: number) { return Object.keys(mem)[i] ?? null; },
+    get length() { return Object.keys(mem).length; },
+  } as any;
+}
+
 // Configuration API: si VITE_API_URL est défini, on utilise l'API Express
 const API_URL = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
 const useApi = Boolean(API_URL);
@@ -44,7 +58,7 @@ const initializeData = () => {
 
 if (!useApi) {
   // On n'initialise le localStorage que si l'API n'est pas utilisée
-  initializeData();
+  try { initializeData(); } catch { /* ignore for non-browser envs */ }
 }
 
 // -------------------- API publique (contrat stable) --------------------
