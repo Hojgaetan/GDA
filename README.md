@@ -1,5 +1,7 @@
 # Gestion d'Absences des Employés
 
+<!-- version-badge --> ![version](https://img.shields.io/badge/version-v1.0.0-blue)
+
 Application web pour enregistrer les absences quotidiennes des employés, visualiser des statistiques, exporter en CSV et gérer le référentiel des employés. Interface moderne, responsive, thème clair/sombre, et persistance locale côté navigateur par défaut. Une API Node/Express + SQLite est fournie en option pour une persistance serveur locale.
 
 Créée par [Joel Gaetan HASSAM OBAH](https://joelhassam.com/).
