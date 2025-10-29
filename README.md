@@ -1,5 +1,3 @@
-![GHBanner](https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6)
-
 # Gestion d'Absences des Employés
 
 Application web pour enregistrer les absences quotidiennes des employés, visualiser des statistiques, exporter en CSV et gérer le référentiel des employés. Interface moderne, responsive, thème clair/sombre, et persistance locale côté navigateur par défaut. Une API Node/Express + SQLite est fournie en option pour une persistance serveur locale.
@@ -81,7 +79,15 @@ Ouvrez l’URL indiquée par Vite (ex: http://localhost:5173).
 npm run setup:db   # crée/seed data/app.db
 npm run server     # lance l’API Express
 ```
-Remarque importante: l’UI actuelle persiste via localStorage. L’API fournie sert d’exemple/extension pour une persistance serveur ; elle n’est pas encore câblée au frontend par défaut.
+- Démarrer le frontend connecté à l’API: créez un fichier `.env.local` à la racine avec:
+```bash
+VITE_API_URL=http://localhost:3001/api
+```
+Puis lancez:
+```bash
+npm run dev
+```
+Remarque importante: l’UI basculera automatiquement sur l’API dès que `VITE_API_URL` est défini. Sans cette variable, le stockage reste `localStorage`.
 
 ## Scripts NPM
 - `dev`: démarre Vite en mode développement

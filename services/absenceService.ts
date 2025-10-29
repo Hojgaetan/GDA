@@ -1,5 +1,28 @@
 import { Employee, AbsenceRecord } from '../types';
 
+// Configuration API: si VITE_API_URL est défini, on utilise l'API Express
+const API_URL = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+const useApi = Boolean(API_URL);
+
+// -------------------- Backend API (Express) --------------------
+async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {}),
+    },
+    ...options,
+  });
+  if (!res.ok) {
+    const msg = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${msg || res.statusText}`);
+  }
+  // 204 No Content
+  if (res.status === 204) return undefined as unknown as T;
+  return (await res.json()) as T;
+}
+
+// -------------------- Backend localStorage (fallback) --------------------
 const MOCK_EMPLOYEES: Employee[] = [
   { id: '1', name: 'Alice Dubois', role: 'Développeuse Frontend' },
   { id: '2', name: 'Bob Martin', role: 'Chef de Projet' },
@@ -10,98 +33,104 @@ const MOCK_EMPLOYEES: Employee[] = [
 const EMPLOYEES_KEY = 'employees';
 const ABSENCES_KEY = 'absences';
 
-// Initialize with mock data if localStorage is empty
 const initializeData = () => {
-    if (!localStorage.getItem(EMPLOYEES_KEY)) {
-        localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(MOCK_EMPLOYEES));
-    }
-    if (!localStorage.getItem(ABSENCES_KEY)) {
-        localStorage.setItem(ABSENCES_KEY, JSON.stringify([]));
-    }
+  if (!localStorage.getItem(EMPLOYEES_KEY)) {
+    localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(MOCK_EMPLOYEES));
+  }
+  if (!localStorage.getItem(ABSENCES_KEY)) {
+    localStorage.setItem(ABSENCES_KEY, JSON.stringify([]));
+  }
 };
 
-initializeData();
+if (!useApi) {
+  // On n'initialise le localStorage que si l'API n'est pas utilisée
+  initializeData();
+}
 
-export const getEmployees = async (): Promise<Employee[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const employees = localStorage.getItem(EMPLOYEES_KEY);
-      resolve(employees ? JSON.parse(employees) : []);
-    }, 200);
-  });
-};
-
-export const getAbsences = async (): Promise<AbsenceRecord[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const absences = localStorage.getItem(ABSENCES_KEY);
-      resolve(absences ? JSON.parse(absences) : []);
-    }, 300);
-  });
-};
-
+// -------------------- API publique (contrat stable) --------------------
 export type NewAbsenceData = Omit<AbsenceRecord, 'id'>;
 export type NewEmployeeData = Omit<Employee, 'id'>;
 
+export const getEmployees = async (): Promise<Employee[]> => {
+  if (useApi) {
+    return apiFetch<Employee[]>('/employees', { method: 'GET' });
+  }
+  const employees = localStorage.getItem(EMPLOYEES_KEY);
+  return employees ? JSON.parse(employees) : [];
+};
+
+export const getAbsences = async (): Promise<AbsenceRecord[]> => {
+  if (useApi) {
+    return apiFetch<AbsenceRecord[]>('/absences', { method: 'GET' });
+  }
+  const absences = localStorage.getItem(ABSENCES_KEY);
+  return absences ? JSON.parse(absences) : [];
+};
+
 export const addAbsence = async (newAbsence: NewAbsenceData): Promise<AbsenceRecord> => {
-  return new Promise((resolve) => {
-    setTimeout(async () => {
-      const allAbsences = await getAbsences();
-      const record: AbsenceRecord = {
-        ...newAbsence,
-        id: new Date().toISOString() + Math.random(),
-      };
-      const updatedAbsences = [...allAbsences, record];
-      localStorage.setItem(ABSENCES_KEY, JSON.stringify(updatedAbsences));
-      resolve(record);
-    }, 400);
-  });
+  if (useApi) {
+    return apiFetch<AbsenceRecord>('/absences', {
+      method: 'POST',
+      body: JSON.stringify(newAbsence),
+    });
+  }
+  const allAbsences = await getAbsences();
+  const record: AbsenceRecord = {
+    ...newAbsence,
+    id: new Date().toISOString() + Math.random(),
+  };
+  const updatedAbsences = [...allAbsences, record];
+  localStorage.setItem(ABSENCES_KEY, JSON.stringify(updatedAbsences));
+  return record;
 };
 
 export const addEmployee = async (newEmployee: NewEmployeeData): Promise<Employee> => {
-  return new Promise((resolve) => {
-    setTimeout(async () => {
-      const allEmployees = await getEmployees();
-      const employee: Employee = {
-        ...newEmployee,
-        id: new Date().toISOString() + Math.random(),
-      };
-      const updatedEmployees = [...allEmployees, employee];
-      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
-      resolve(employee);
-    }, 300);
-  });
+  if (useApi) {
+    return apiFetch<Employee>('/employees', {
+      method: 'POST',
+      body: JSON.stringify(newEmployee),
+    });
+  }
+  const allEmployees = await getEmployees();
+  const employee: Employee = {
+    ...newEmployee,
+    id: new Date().toISOString() + Math.random(),
+  };
+  const updatedEmployees = [...allEmployees, employee];
+  localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
+  return employee;
 };
 
-export const updateEmployee = async (employeeId: string, updatedData: Omit<Employee, 'id'>): Promise<Employee> => {
-  return new Promise(async (resolve, reject) => {
-    setTimeout(async () => {
-      const allEmployees = await getEmployees();
-      const employeeIndex = allEmployees.findIndex(e => e.id === employeeId);
-      if (employeeIndex === -1) {
-        return reject(new Error("Employé non trouvé"));
-      }
-      const updatedEmployee = { ...allEmployees[employeeIndex], ...updatedData };
-      allEmployees[employeeIndex] = updatedEmployee;
-      localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(allEmployees));
-      resolve(updatedEmployee);
-    }, 300);
-  });
+export const updateEmployee = async (
+  employeeId: string,
+  updatedData: Omit<Employee, 'id'>
+): Promise<Employee> => {
+  if (useApi) {
+    return apiFetch<Employee>(`/employees/${employeeId}`, {
+      method: 'PUT',
+      body: JSON.stringify(updatedData),
+    });
+  }
+  const allEmployees = await getEmployees();
+  const employeeIndex = allEmployees.findIndex((e) => e.id === employeeId);
+  if (employeeIndex === -1) {
+    throw new Error('Employé non trouvé');
+  }
+  const updatedEmployee = { ...allEmployees[employeeIndex], ...updatedData };
+  allEmployees[employeeIndex] = updatedEmployee;
+  localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(allEmployees));
+  return updatedEmployee;
 };
 
 export const deleteEmployee = async (employeeId: string): Promise<void> => {
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 400));
-
-  // Get current data
+  if (useApi) {
+    await apiFetch<void>(`/employees/${employeeId}`, { method: 'DELETE' });
+    return;
+  }
   const allEmployees = await getEmployees();
   const allAbsences = await getAbsences();
-
-  // Filter out the deleted employee and their absences
-  const updatedEmployees = allEmployees.filter(e => e.id !== employeeId);
-  const updatedAbsences = allAbsences.filter(a => a.employeeId !== employeeId);
-
-  // Save the updated data back to localStorage
+  const updatedEmployees = allEmployees.filter((e) => e.id !== employeeId);
+  const updatedAbsences = allAbsences.filter((a) => a.employeeId !== employeeId);
   localStorage.setItem(EMPLOYEES_KEY, JSON.stringify(updatedEmployees));
   localStorage.setItem(ABSENCES_KEY, JSON.stringify(updatedAbsences));
 };
