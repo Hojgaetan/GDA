@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { ClockIcon, DashboardIcon, MoonIcon, SunIcon } from './components/icons';
 import ClockingPage from './components/ClockingPage';
@@ -66,8 +65,19 @@ const App: React.FC = () => {
         {page === 'clocking' ? <ClockingPage /> : <DashboardPage />}
       </main>
 
-       <footer className="text-center p-4 text-sm text-slate-500 dark:text-slate-400">
-        Développé avec ❤️ pour la gestion d'entreprise. Données sauvegardées localement.
+      <footer className="text-center p-4 text-sm text-slate-500 dark:text-slate-400">
+        <p>Développé avec ❤️ pour la gestion d'entreprise. Données sauvegardées localement.</p>
+        <p className="mt-1">
+          Application créée par{' '}
+          <a
+            href="https://joelhassam.com/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary-600 dark:text-primary-400 underline decoration-dotted underline-offset-2 hover:opacity-90"
+          >
+            Joel Gaetan HASSAM OBAH
+          </a>
+        </p>
       </footer>
     </div>
   );

@@ -1,4 +1,4 @@
-import { Employee, AbsenceRecord, AbsenceType } from '../types';
+import { Employee, AbsenceRecord } from '../types';
 
 const MOCK_EMPLOYEES: Employee[] = [
   { id: '1', name: 'Alice Dubois', role: 'Développeuse Frontend' },
