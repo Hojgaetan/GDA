@@ -1,0 +1,5 @@
+{
+  "name": "Gestion d'Absences Employés",
+  "description": "Une application pour le pointage journalier des heures d'absence des employés, avec un tableau de bord pour l'administration. Les données sont stockées localement dans votre navigateur pour la démonstration.",
+  "requestFramePermissions": []
+}

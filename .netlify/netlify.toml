@@ -1,0 +1,47 @@
+redirectsOrigin = "config"
+plugins = []
+headers = []
+
+[dev]
+command = "npm run dev"
+port = 3000.0
+targetPort = 3000.0
+framework = "vite"
+
+[functions]
+
+[functions."*"]
+
+[build]
+publish = "/Users/mondeimpression/Desktop/JOEL/MI Generative/gestion-d'absences-employés/dist"
+publishOrigin = "config"
+commandOrigin = "config"
+base = "/Users/mondeimpression/Desktop/JOEL/MI Generative/gestion-d'absences-employés"
+command = "npm run build"
+
+[build.environment]
+NODE_VERSION = "20"
+
+[build.processing]
+
+[build.processing.css]
+
+[build.processing.html]
+
+[build.processing.images]
+
+[build.processing.js]
+
+[build.services]
+
+[[redirects]]
+from = "/*"
+to = "/index.html"
+status = 200.0
+force = false
+
+[redirects.query]
+
+[redirects.conditions]
+
+[redirects.headers]

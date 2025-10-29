@@ -1,0 +1,32 @@
+{
+  "name": "gestion-d'absences-employés",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "server": "node ./server/index.js",
+    "setup:db": "node ./server/index.js --init-only",
+    "db:reset": "rm -f ./data/app.db && npm run setup:db",
+    "dev:all": "concurrently -k -n server,web -c green,blue \"npm:server\" \"npm:dev\"",
+    "deploy:netlify": "npm run build && npx netlify deploy --prod --dir=dist"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/react": "^19.2.2",
+    "@types/react-dom": "^19.2.2",
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.1",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
+  }
+}

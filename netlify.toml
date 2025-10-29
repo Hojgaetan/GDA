@@ -1,0 +1,20 @@
+# Netlify configuration for Vite + React SPA
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+# SPA fallback so client-side routing works on refresh and deep links
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+# Optional: local dev via `netlify dev` (will proxy to Vite)
+[dev]
+  command = "npm run dev"
+  port = 3000
+  targetPort = 3000
+  framework = "vite"
