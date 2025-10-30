@@ -68,7 +68,6 @@ const App: React.FC = () => {
       </main>
 
       <footer className="text-center p-4 text-sm text-slate-500 dark:text-slate-400">
-        <p>Développé avec ❤️ pour la gestion d'entreprise. Données sauvegardées localement.</p>
         <p className="mt-1">
           Application créée par{' '}
           <a
