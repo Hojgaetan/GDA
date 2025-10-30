@@ -45,7 +45,7 @@ const App: React.FC = () => {
       <header className="bg-white dark:bg-slate-800 shadow-md sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <h1 className="text-xl md:text-2xl font-bold text-primary-600 dark:text-primary-400">
-            Gestion Absences
+            GDA
           </h1>
           <nav className="flex items-center gap-2 md:gap-4">
             <NavButton active={page === 'clocking'} onClick={() => setPage('clocking')}>
