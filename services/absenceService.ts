@@ -15,14 +15,18 @@ if (!hasLocalStorage) {
 }
 
 // Configuration API: si VITE_API_URL est défini, on utilise l'API Express
-const API_URL = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+// Normalise la base pour éviter les doubles slashs
+const RAW_API_URL = (import.meta as any)?.env?.VITE_API_URL as string | undefined;
+const API_URL = RAW_API_URL ? RAW_API_URL.replace(/\/+$/, '') : undefined;
 const useApi = Boolean(API_URL);
 
 // -------------------- Backend API (Express) --------------------
 async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, {
+  const url = `${API_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  const res = await fetch(url, {
     headers: {
       'Content-Type': 'application/json',
+      'Accept': 'application/json',
       ...(options.headers || {}),
     },
     ...options,
@@ -73,12 +77,16 @@ export const getEmployees = async (): Promise<Employee[]> => {
   return employees ? JSON.parse(employees) : [];
 };
 
-export const getAbsences = async (): Promise<AbsenceRecord[]> => {
+// Ajout: prise en charge optionnelle d'un filtre employeeId côté API
+export const getAbsences = async (opts?: { employeeId?: string }): Promise<AbsenceRecord[]> => {
   if (useApi) {
-    return apiFetch<AbsenceRecord[]>('/absences', { method: 'GET' });
+    const qs = opts?.employeeId ? `?employeeId=${encodeURIComponent(opts.employeeId)}` : '';
+    return apiFetch<AbsenceRecord[]>(`/absences${qs}`, { method: 'GET' });
   }
   const absences = localStorage.getItem(ABSENCES_KEY);
-  return absences ? JSON.parse(absences) : [];
+  const list: AbsenceRecord[] = absences ? JSON.parse(absences) : [];
+  if (opts?.employeeId) return list.filter(a => a.employeeId === opts.employeeId);
+  return list;
 };
 
 export const addAbsence = async (newAbsence: NewAbsenceData): Promise<AbsenceRecord> => {
@@ -96,6 +104,17 @@ export const addAbsence = async (newAbsence: NewAbsenceData): Promise<AbsenceRec
   const updatedAbsences = [...allAbsences, record];
   localStorage.setItem(ABSENCES_KEY, JSON.stringify(updatedAbsences));
   return record;
+};
+
+// Nouveau: suppression d'une absence
+export const deleteAbsence = async (absenceId: string): Promise<void> => {
+  if (useApi) {
+    await apiFetch<void>(`/absences/${absenceId}`, { method: 'DELETE' });
+    return;
+  }
+  const allAbsences = await getAbsences();
+  const updated = allAbsences.filter(a => a.id !== absenceId);
+  localStorage.setItem(ABSENCES_KEY, JSON.stringify(updated));
 };
 
 export const addEmployee = async (newEmployee: NewEmployeeData): Promise<Employee> => {

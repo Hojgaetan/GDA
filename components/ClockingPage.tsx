@@ -38,7 +38,8 @@ const ClockingPage: React.FC = () => {
   const fetchAbsencesForEmployee = useCallback(async () => {
     if (!selectedEmployeeId) return;
     try {
-      const allAbsences = await getAbsences();
+      // Utilise le filtre backend quand disponible; sinon, le service filtrera côté client
+      const allAbsences = await getAbsences({ employeeId: selectedEmployeeId });
       const today = new Date().toISOString().split('T')[0];
       const filtered = allAbsences.filter(
         (a) => a.employeeId === selectedEmployeeId && a.date === today
@@ -236,4 +237,3 @@ const ClockingPage: React.FC = () => {
 };
 
 export default ClockingPage;
-
